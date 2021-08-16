@@ -96,17 +96,13 @@ controller = {
 
 };
 
+//uI
 
-function drawUi(buttons) {
-
+function drawButton(buttons){
   var button, index;
-  c.fillStyle = "lime";
-  c.fillRect(0, 400, c.canvas.width, c.canvas.height);
-  c.fillStyle = "black";
-  c.fillRect(0, 403, c.canvas.width, c.canvas.height);
-
+  
   for (index = buttons.length - 1; index > -1; --index) {
-
+  
     button = buttons[index];
     c.beginPath()
     c.fillStyle = button.color;
@@ -115,11 +111,11 @@ function drawUi(buttons) {
     c.fillStyle = "black";
     c.fillRect(button.x + 3, button.y + 3, button.width - 6, button.height - 6);
     c.fill()
-
+  
     c.fillStyle = button.txtColor;
     c.font = "bold " + button.widthTxt + "px" + " Arial";
     c.fillText(button.txt, button.x + button.width / 2 - 6, button.y + button.height / 2 + 3, button.widthTxt);
-
+  
     if (button.active) {
       c.beginPath()
       c.fillStyle = "black";
@@ -128,13 +124,32 @@ function drawUi(buttons) {
       c.fillStyle = button.color;
       c.fillRect(button.x + 3, button.y + 3, button.width - 6, button.height - 6);
       c.fill()
-
+  
       c.fillStyle = "black";
       c.font = "bold " + button.widthTxt + "px" + " Arial";
       c.fillText(button.txt, button.x + button.width / 2 - 6, button.y + button.height / 2 + 3, button.widthTxt);
-
+  
     }
   }
+}
+
+function drawTxt(x, y, width, color, txt) {
+  c.beginPath()
+  c.fillStyle = color;
+  c.font = "bold " + width + "px" + " Arial";
+  c.fillText(txt, x + width / 2 - 6, y + width / 2 + 3, width);
+
+}
+
+function drawUi() {
+
+  
+  c.fillStyle = "lime";
+  c.fillRect(0, 400, c.canvas.width, c.canvas.height);
+  c.fillStyle = "black";
+  c.fillRect(0, 403, c.canvas.width, c.canvas.height);
+  drawButton(controller.buttons)
+  
 }
 
 
@@ -153,7 +168,7 @@ let bounding_rectangle = c.canvas.getBoundingClientRect();
 const MAX_X = c.canvas.width
 const MAX_Y = 400
 
-let debug = true
+let debug = false
 //sourcer Imgs
 
 let basicEnemyImg, PlayerImg
@@ -173,6 +188,8 @@ class PlayerEntity {
   counterFrame = 0
   counterBullet = 0
   speedShot = 100
+  speedChargerShoot = 1
+  speed = 0.5
   constructor(img, radius, hp) {
     this.img = img
     this.radius = radius
@@ -188,10 +205,10 @@ class PlayerEntity {
     c.drawImage(this.img, 0, this.counterFrame * 16, 16, 16, player.x - 20, player.y - 20, 40, 40);
   }
   shot() {
-    //bullets.push(new bullet(playerX, playerY, 10, false))
+    bullets.push(new bullet(player.x, player.y, 5, true,1,0,-4))
   }
   updateShot() {
-    this.counterBullet++
+    this.counterBullet += this.speedChargerShoot
     if (this.counterBullet > this.speedShot) {
       this.shot()
       this.counterBullet = 0
@@ -219,35 +236,87 @@ class PlayerEntity {
   }
   hit(DAMAGE) {
     this.hp = this.hp - DAMAGE
-    atParticle(10, player.x, player.y, 50, 0, "lime", 0, 6, false, false)
+    console.log(this.hp)
+ //   atParticle(10, player.x, player.y, 50, 0, "lime", 0, 6, false, false)
   }
   dead() {
-    atParticle(20, player.x, player.y, 100, 0.05, "lime", 0, 10, false, true, 4)
+  //  atParticle(20, player.x, player.y, 100, 0.05, "lime", 0, 10, false, true, 4)
+  }
+  setSpeed(NUMBER_) {
+    this.speed = NUMBER_
+  }
+  setSpeedChargerShot(NUMBER_) {
+    this.speedChargerShoot = NUMBER_
   }
 }
 
-
+/* Bullet */
+class bullet {
+  velx = 0
+  vely = 0
+  constructor(x, y, radius, isEnemy = false, damage = 1, speedx = 0, speedy = 0, color = "lime") {
+    this.x = x
+    this.y = y
+    this.radius = radius
+    this.isEnemy = isEnemy
+    this.damage = damage
+    this.speedx = speedx
+    this.speedy = speedy
+    this.color = color
+  }
+  hitBox() {
+    c.beginPath()
+    c.fillStyle = 'white'
+    c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
+    c.fill()
+  }
+  draw() {
+    let x, y
+    x = this.x - this.radius/1.5
+    y = this.y - this.radius/1.5
+    c.beginPath()
+    c.fillStyle = this.color
+    if(this.radius >= 10){
+   c.fillRect(x, y, this.radius * 1.4, this.radius * 1.4)
+    }
+    c.fillRect(x + this.radius / 6, y - this.radius / 5, this.radius * 1, this.radius * 1.8)
+    c.fillRect(x - this.radius / 5, y + this.radius / 6, this.radius * 1.8, this.radius * 1)
+    c.fill()
+  }
+  move() {
+    this.x += this.speedx
+    this.y += this.speedy
+  }
+  update() {
+    this.move()
+    if (debug) {
+      this.hitBox()
+    }
+    this.draw()
+  }
+  
+  hit(indexBullet, Isplayer=false, indexEnemy, enemy){
+    if(Isplayer){
+      bullets.splice(indexBullet,1)
+      player.entity.hit(this.damage)
+    }
+  }
+}
 //Game
 /* Player */
 let control = { down: false, up: false, right: false, left: false }
 
-let player = { x: MAX_X / 2, y: 300, entity: new PlayerEntity(PlayerImg, 20, 20) }
+let player = { x: MAX_X / 2, y: 300, entity: new PlayerEntity(PlayerImg, 20, 20), velx: 0, vely: 0 }
 
 
 
-let bullets = []
+let bullets = [ ]
 let playerParticles = []
 let particles = []
 let enemys = []
 
 //fuctions
-function drawTxt(x, y, width, color, txt) {
-  c.beginPath()
-  c.fillStyle = color;
-  c.font = "bold " + width + "px" + " Arial";
-  c.fillText(txt, x + width / 2 - 6, y + width / 2 + 3, width);
 
-}
 
 
 function checkKey(key) {
@@ -283,10 +352,45 @@ function animation() {
   c.clearRect(0, 0, c.canvas.width, c.canvas.height)
 
   player.entity.update()
+  
+  /* Bullet */
+  
+  bullets.forEach((bullet, index) => {
+    
+    
+    bullet.update()
+    /* Unpaw */
+    if(bullet.x + bullet.radius < 0){
+      
+      bullets.splice(index,1)
+      
+    }
+    if(bullet.x - bullet.radius > MAX_X){
+     
+     bullets.splice(index,1)
+     
+    }
+    
+    if (bullet.y + bullet.radius < 0) {
+    
+      bullets.splice(index, 1)
+    
+    }
+    if (bullet.y - bullet.radius > MAX_Y) {
+    
+      bullets.splice(index, 1)
+    
+    }
+     if(bullet.isEnemy){
+    const dist = Math.hypot(bullet.x - player.x, bullet.y - player.y)
+  
+    if (dist - player.entity.radius - bullet.radius < 1 && bullet.isEnemy) {
+      bullet.hit(index, true)
+    }
+     }
+  })
 
-
-  drawUi(controller.buttons)
-
+  drawUi()
 
   /* Control input */
   if (controller.buttons[0].active) {
@@ -302,18 +406,40 @@ function animation() {
     checkKey(39)
   }
   /* input Config */
-  if (control.down && !(player.y + player.entity.radius >= MAX_Y)) {
-    player.y += 1
+  if (control.down) {
+    player.vely += player.entity.speed
   }
-  if (control.up && !(player.y - player.entity.radius <= 0)) {
-    player.y -= 1
+  if (control.up) {
+    player.vely -= player.entity.speed
   }
-  if (control.left && !(player.x - player.entity.radius <= 0)) {
-    player.x -= 1
+  if (control.left) {
+    player.velx -= player.entity.speed
   }
-  if (control.right && !(player.x + player.entity.radius >= MAX_X)) {
-    player.x += 1
+  if (control.right) {
+    player.velx += player.entity.speed
   }
+
+  // simulate friction:
+  player.velx *= 0.9;
+  player.vely *= 0.9;
+ //move
+  player.x += player.velx;
+  player.y += player.vely;
+  
+  //mirror check
+  
+  if(player.x + player.entity.radius < 0){
+    player.x = MAX_X
+  }else if(player.x - player.entity.radius > MAX_X){
+    player.x = 0
+  }
+  
+  if (player.y + player.entity.radius < 0) {
+    player.y = MAX_Y
+  }else if(player.y - player.entity.radius > MAX_Y){
+    player.y = 0
+  }
+  
   /* reset */
   control.down = control.up = control.left = control.right = false
 
@@ -389,3 +515,5 @@ function fpsRender (timestamp) {
 }
 }
 */
+player.entity.setSpeedChargerShot(player.entity.speedChargerShoot +2)
+console.log(player.entity.speedChargerShoot )
