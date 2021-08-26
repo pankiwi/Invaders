@@ -211,7 +211,7 @@ basicEnemyImg = new Image();
 basicEnemyImg.src = "src/basicEnemy.png"
 
 /*
- * Class Player
+ * Class Player.
  */
 
 class PlayerEntity {
