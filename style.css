@@ -1,12 +1,7 @@
-body {
-  font-size: 15pt;
-  
-  background: black;
-}
 
 * canvas {
   outline: lime  solid 4px;
   background: black;
-  margin: 50% 50%;
+  margin: 0% 50%;
 }
 
