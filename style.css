@@ -1,9 +1,15 @@
 body {
- background: #FCFDFF;
-}
-* canvas {
-  outline: lime  solid 4px;
+  font-size: 15pt;
+  margin: 0 auto;
   background: black;
-  margin: 0% 50%;
 }
 
+* canvas {
+  outline: lime  solid 4px;
+  background: gray;
+  margin: 10% 50%;
+}
+
+* button {
+  margin: 10% 80%;
+}
