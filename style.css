@@ -1,4 +1,6 @@
-
+body {
+ background: #FCFDFF;
+}
 * canvas {
   outline: lime  solid 4px;
   background: black;
