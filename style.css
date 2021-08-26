@@ -1,19 +1,12 @@
 body {
   font-size: 15pt;
-  margin: 0 auto;
+  
   background: black;
 }
 
 * canvas {
   outline: lime  solid 4px;
   background: black;
-  margin: 90% 50%;
+  margin: 50% 50%;
 }
 
-* h2 {
-  margin:  auto;
-  color: #FFFFFF;
-}
-* button {
-  margin: 50% 80%;
-}
