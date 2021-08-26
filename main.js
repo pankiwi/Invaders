@@ -115,7 +115,7 @@ function drawButton(buttons) {
   c.fillStyle = button.txtColor;
   c.font = "bold " + button.widthTxt + "px" + " Arial";
   c.fillText(button.txt, button.x + button.width / 2 - 6, button.y + button.height / 2 + 3, button.widthTxt);
-
+  
   if (button.active) {
    c.beginPath()
    c.fillStyle = "black";
@@ -152,17 +152,35 @@ function drawUi() {
  c.fillRect(270, 400, 350, c.canvas.height);
  c.fillStyle = "black";
  c.fillRect(273, 403, 350, c.canvas.height);
- drawTxt(260, 410,70,40,"lime","health shild:")
- for(let i = 0; i < player.entity.hp; i++){
-  c.beginPath()
-  let hp = player.entity.hp
-  let maxhp = player.entity.MAX_HP
-  let hue = hp
+ drawTxt(245, 405, 80, 40, "lime", "Health:")
+ drawTxt(245, 455, 80, 40, "lime", "Points:")
+ drawTxt(335, 455, 80, 40, "lime", points)
  
- // drawTxt(MAX_X/2,MAX_X/2,40,60,"white",)
-  c.fillStyle = "hsl(" + hue*5 + ",100%,50%)";
-  c.fillRect(365 + i * 2, 419, 20, 30);
+ let hp = player.entity.hp
+ let Extrahp = player.entity.ExtraHp
+ let maxhp = player.entity.MAX_HP
+
+ for (let i = 0; i < maxhp; i++) {
+  c.beginPath()
+  c.fillStyle = "lime";
+  c.fillRect(365 + i * 25, 419, 20 + 2, 30 + 2);
+  c.fillStyle = "black";
+  c.fillRect(366 + i * 25, 420, 20, 30);
  }
+
+ for (let i = 0; i < hp; i++) {
+  c.beginPath()
+  c.fillStyle = "lime";
+  c.fillRect(371 + i * 25, 427, 10, 16);
+ }
+
+ for (let i = 0; i < Extrahp; i++) {
+  c.beginPath()
+  c.fillStyle = "lime";
+  c.fillRect(368 + i * 25, 422, 16, 26);
+ }
+
+
 }
 
 
@@ -180,7 +198,7 @@ let bounding_rectangle = c.canvas.getBoundingClientRect();
 /* coords */
 const MAX_X = c.canvas.width
 const MAX_Y = 400
-
+let points = 0
 let debug = false
 //sourcer Imgs
 
@@ -197,19 +215,22 @@ basicEnemyImg.src = "src/basicEnemy.png"
  */
 
 class PlayerEntity {
+ invensility = 0
+ inv = 0
  frame = 0
  counterFrame = 0
  counterBullet = 0
  speedShot = 100
  speedChargerShoot = 1
  speed = 0.5
- invensility = 0
- inv = 0
  constructor(img, radius, hp) {
   this.img = img
   this.radius = radius
   this.hp = hp
   this.MAX_HP = hp
+  this.ExtraHp = 0
+  this.MAX_SPEED = 1.5
+  this.MAX_DAMAGE = 30
  }
  hitBox() {
   c.beginPath()
@@ -218,10 +239,20 @@ class PlayerEntity {
   c.fill()
  }
  draw() {
+  if (this.ExtraHp != 0) {
+   c.beginPath()
+   c.fillStyle = 'lime'
+   c.arc(player.x, player.y, this.radius + 6, 0, Math.PI * 2, false)
+   c.fill()
+   c.beginPath()
+   c.fillStyle = 'black'
+   c.arc(player.x, player.y, this.radius + 4, 0, Math.PI * 2, false)
+   c.fill()
+  }
   c.drawImage(this.img, 0, this.counterFrame * 16, 16, 16, player.x - 20, player.y - 20, 40, 40);
  }
  shot() {
-  bullets.push(new bullet(player.x, player.y - this.radius, player.bullet.width, false, player.bullet.damge , 0, player.bullet.speed))
+  bullets.push(new bullet(player.x, player.y - this.radius, player.bullet.width, false, player.bullet.damge, 0, player.bullet.speed))
  }
  updateShot() {
   this.counterBullet += this.speedChargerShoot
@@ -243,36 +274,52 @@ class PlayerEntity {
   }
  }
  update() {
-  if(this.invensility > 0){
-  this.inv = ++this.inv % 30
+  if (this.invensility > 0) {
+   this.inv = ++this.inv % 30
   }
   this.updateShot()
   this.animator()
   if (debug) {
    this.hitBox()
   }
-  if(!(this.inv >= 5 && !this.invensility == 0)){
-  this.draw()
-  }else{
+  if (!(this.inv >= 5 && !this.invensility == 0)) {
+   this.draw()
+  } else {
    this.invensility--
   }
   
  }
  hit(DAMAGE) {
-  if(!this.invensility >= 1){
+  if (!this.invensility >= 1) {
    this.invensility = 50
-  this.hp = this.hp - DAMAGE
-  //   atParticle(10, player.x, player.y, 50, 0, "lime", 0, 6, false, false)
+   if (this.ExtraHp <= 0) {
+    this.hp = this.hp - DAMAGE
+   } else {
+    this.ExtraHp = this.ExtraHp - DAMAGE
+   }
+   if (this.ExtraHp <= 0) this.ExtraHp = 0
+   if (this.hp <= 0) {
+    this.dead()
+   }
+   //   atParticle(10, player.x, player.y, 50, 0, "lime", 0, 6, false, false)
   }
  }
  dead() {
-  //  atParticle(20, player.x, player.y, 100, 0.05, "lime", 0, 10, false, true, 4)
+   atParticle(20, player.x, player.y,200, 0, "lime",0, 10, false, false, {velx :1, vely : 1})
  }
  setSpeed(NUMBER_) {
   this.speed = NUMBER_
  }
  setSpeedChargerShot(NUMBER_) {
   this.speedChargerShoot = NUMBER_
+ }
+ addHealth(type, NUMBER_) {
+  if (type == "sh") {
+   this.ExtraHp = this.ExtraHp + NUMBER_ > this.MAX_HP ? this.MAX_HP : this.ExtraHp + NUMBER_
+  }
+  if (type == "ht") {
+   this.ExtraHp = this.hp + NUMBER_ > this.MAX_HP ? this.MAX_HP : this.hp + NUMBER_
+  }
  }
 }
 
@@ -348,7 +395,10 @@ class enemy {
   c.fill()
  }
  draw() {
-
+  c.beginPath()
+  c.fillStyle = 'red'
+  c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
+  c.fill()
  }
  update() {
   if (debug) {
@@ -358,10 +408,11 @@ class enemy {
  }
  hit(DAMAGE) {
   this.hp = this.hp - DAMAGE
-  // atParticle(10, this.x, this.y, 50, 0, "red", 0, 6, false, false, 2)
+  atParticle(5, this.x, this.y,40, 0, "red",0, 5, false, false, {velx :1, vely : 1})
  }
  dead() {
-  // atParticle(10, this.x, this.y, 100, 0.05, "red", 0, 10, false, true, 3)
+  particles.push(new point_entity(this.x, this.y, 20, 5))
+   atParticle(10, this.x, this.y,50, 0, "red",0, 8, false, false, {velx :3, vely : 3})
  }
 }
 
@@ -372,78 +423,168 @@ class basicEnemy extends enemy {
  counterFrame = 0
  counterMove = 0
  counterShot = 0
- constructor(x = 0, y = 0, radius = 1, hp = 1,animation = {hasAnimation: false, spriteWidth: 40, img: null, frames: 3,speedAnimationFrame:10},moveEnemy = {continuosMove:false,velx:1,vely:1,TimeLapseMove:100,velTimeLapse:1},BulletEnemy = {hasBullet:true,radius:5,velx:0,vely:1,shots:1,damage:1,width:1,ShotTime:50, velShotReload:1}){
+ constructor(x = 0, y = 0, radius = 1, hp = 1, animation = { hasAnimation: false, spriteWidth: 40, img: null, frames: 3, speedAnimationFrame: 10 }, moveEnemy = { continuosMove: false, velx: 1, vely: 1, TimeLapseMove: 100, velTimeLapse: 1 }, BulletEnemy = { hasBullet: true, radius: 5, velx: 0, vely: 1, shots: 1, damage: 1, width: 1, ShotTime: 50, velShotReload: 1 }) {
   super(x, y, radius, hp)
   this.animation = animation
   this.moveEnemy = moveEnemy
   this.BulletEnemy = BulletEnemy
  }
  draw() {
-  if(this.animation.hasAnimation){
-  c.drawImage(this.animation.img, 0, this.frame * 16, 16, 16, this.x - 20, this.y - 20, this.animation.spriteWidth, this.animation.spriteWidth);
-  }else{
-       c.drawImage(this.animation.img, 0,16, 16, 16, this.x - 20, this.y - 20, this.animation.spriteWidth, this.animation.spriteWidth);
+  if (this.animation.hasAnimation) {
+   c.drawImage(this.animation.img, 0, this.frame * 16, 16, 16, this.x - 20, this.y - 20, this.animation.spriteWidth, this.animation.spriteWidth);
+  } else {
+   c.drawImage(this.animation.img, 0, 16, 16, 16, this.x - 20, this.y - 20, this.animation.spriteWidth, this.animation.spriteWidth);
   }
  }
  animator() {
   this.counterFrame++
-  this.f = ++this.f % this.animation.speedAnimationFrame +1
-  if(this.f == this.animation.speedAnimationFrame){
-  this.frame = ++this.frame % this.animation.frames
+  this.f = ++this.f % this.animation.speedAnimationFrame + 1
+  if (this.f == this.animation.speedAnimationFrame) {
+   this.frame = ++this.frame % this.animation.frames
   }
  }
  move() {
-  if(this.moveEnemy.continuosMove){
-   this.x = this.x +  this.moveEnemy.velx
+  if (this.moveEnemy.continuosMove) {
+   this.x = this.x + this.moveEnemy.velx
    this.y = this.y + this.moveEnemy.vely
-  }else{
+  } else {
    this.counterMove = (this.counterMove + this.moveEnemy.velTimeLapse) % this.moveEnemy.TimeLapseMove + 1
-   if(this.counterMove == this.moveEnemy.TimeLapseMove){
+   if (this.counterMove == this.moveEnemy.TimeLapseMove) {
     this.x = this.x + this.moveEnemy.velx
-    this.y = this.y +  this.moveEnemy.vely
+    this.y = this.y + this.moveEnemy.vely
    }
   }
  }
  shot() {
-  for(let i = 0; i < this.BulletEnemy.shots; i++){
-   bullets.push( new bullet(this.x, this.y ,this.BulletEnemy.radius,true,this.BulletEnemy.damage,this.BulletEnemy.velx,this.BulletEnemy.vely,"red"))
+  for (let i = 0; i < this.BulletEnemy.shots; i++) {
+   bullets.push(new bullet(this.x, this.y, this.BulletEnemy.radius, true, this.BulletEnemy.damage, this.BulletEnemy.velx, this.BulletEnemy.vely, "red"))
   }
  }
  updateShot() {
   this.counterShot = (this.counterShot + this.BulletEnemy.velShotReload) % this.BulletEnemy.ShotTime + 1
-  if(this.counterShot == this.BulletEnemy.ShotTime){
+  if (this.counterShot == this.BulletEnemy.ShotTime) {
    this.shot()
    this.counterShot = 0
   }
  }
  update() {
- this.updateShot()
- this.move()
- 
+  this.updateShot()
+  this.move()
+
   if (this.animation.hasAnimation) {
    this.animator()
   }
   super.update()
  }
+ hit(DAMAGE_) {
+  super.hit(DAMAGE_)
+
+ }
+}
+/* Effect */
+
+class Particle {
+ alfa;
+ velx;
+ vely
+ constructor(x, y, time = 0, alfaDegrase = 0.15, color = "white", gravity = 0, size = "20", isWhile = true, hasAlfa = true, vel = { velx: 0, vely: 0 }) {
+  this.centerX = x;
+  this.centerY = y;
+  this.x = x;
+  this.y = y;
+  this.timer = time
+  this.time = time;
+  this.alfaDegrase = alfaDegrase;
+  this.color = color;
+  this.gravity = gravity;
+  this.size = size
+  this.isWhile = isWhile
+  this.hasAlfa = hasAlfa
+  this.vel = vel
+  this.reset(this.centerX, this.centerY);
+ }
+ reset(x, y) {
+  this.x = x;
+  this.y = y;
+  this.velx = Math.random() * this.vel.velx - this.vel.velx / 2; // -0.5 , 0.5
+  this.vely = Math.random() * this.vel.vely - this.vel.vely / 2; // -0.5 , 0.5
+  this.time = this.timer
+  this.alfa = 1;
+ }
+ draw() {
+  c.save();
+  c.globalAlpha = this.alfa;
+  c.fillStyle = this.color;
+  c.fillRect(this.x, this.y, this.size, this.size);
+  c.restore();
+ }
+ update() {
+  this.draw();
+  this.x = this.x + this.velx;
+  this.y = this.y + this.vely + this.gravity;
+  if (this.time <= 0) {
+   this.alfa = this.alfa - this.alfaDegrase <= 0 ? 0 : this.alfa - this.alfaDegrase
+
+   if (this.alfa <= 0 && this.isWhile) {
+    this.reset(this.centerX, this.centerY);
+   }
+  }
+  else {
+   this.time = this.time - 1
+  }
+
+ }
+ updateXY(x, y) {
+  this.centerX = x
+  this.centerY = y
+ }
 }
 
+class txt_entity extends Particle {
+ constructor(x, y, size, txt = "") {
+  super(x, y,60,0, "lime",0.2, size, false, false)
+  this.txt = txt
+
+ }
+ draw() {
+  c.save()
+  c.globalAlpha = this.alfa
+  c.fillStyle = this.color;
+
+  c.font = "bold " + this.size + "px" + " Arial";
+  c.fillText(this.txt, this.x + this.size / 2 - 6, this.y + this.size / 2 + 3, this.size);
+  c.restore()
+ }
+}
+
+class point_entity extends txt_entity {
+ constructor(x, y, size, point = 1) {
+  super(x, y, size, "+" + point)
+  this.point = point
+  points = points + point
+
+ }
+ 
+}
 
 //Game
 /* Player */
 let control = { down: false, up: false, right: false, left: false }
 
-let player = { x: MAX_X / 2, y: 300, entity: new PlayerEntity(PlayerImg, 20, 20), velx: 0, vely: 0, bullet: { damge: 1, speed: -2, type: null, color: "lime", width: 5 } }
+let player = { x: MAX_X / 2, y: 300, entity: new PlayerEntity(PlayerImg, 20, 8), velx: 0, vely: 0, bullet: { damge: 1, speed: -2, type: null, color: "lime", width: 5 } }
 
 
 
 let bullets = []
 let playerParticles = []
 let particles = []
-let enemys = [new basicEnemy(200,200,20,10,{hasAnimation:true,spriteWidth:40,img:basicEnemyImg,frames:3,speedAnimationFrame:30},{continuosMove:true,velx: 0,vely: 0.1,TimeLapseMove:100,velTimeLapse:1})]
-
+let enemys = [new enemy(200, 200, 20, 2)]
+let raound = 1
 //fuctions
 
-
+function spawEnemy(){
+ 
+}
 
 function checkKey(key) {
  if (key == 38) {
@@ -460,7 +601,7 @@ function checkKey(key) {
  }
 }
 
-function atParticle(amount, x, y, time, alfaDegrase, color, gravity, size, isWhile = true, hasAlfa = true, vel = 1, player = false) {
+function atParticle(amount = 1, x = 1, y = 1, time = 0, alfaDegrase = 0, color = "white", gravity = 0, size = 20, isWhile = true, hasAlfa = true, vel = {velx:0,vely:0}, player = false) {
  if (player) {
   for (let i = 0; i < amount; i++) {
    playerParticles.push(new Particle(x, y, time + i, alfaDegrase, color, gravity, size, isWhile, hasAlfa, vel))
@@ -530,11 +671,25 @@ function animation() {
    enemy.dead()
    enemys.splice(index, 1)
   }
-  
+
   const dist = Math.hypot(enemy.x - player.x, enemy.y - player.y)
-  
+
   if (dist - enemy.radius - player.entity.radius < 0.00001) {
    player.entity.hit(1)
+
+  }
+ })
+ particles.forEach((particle, index) => {
+  particle.update()
+  if (!particle.isWhile && particle.hasAlfa) {
+   if (particle.time <= 0 && particle.alfa <= 0) {
+    particles.splice(index, 1)
+   }
+  }
+  if (!particle.isWhile && !particle.hasAlfa) {
+   if( particle.time <= 0){
+  particles.splice(index, 1)
+   }
   }
  })
  drawUi()
@@ -620,7 +775,7 @@ document.addEventListener("keyup", (key) => {
 
 window.onload = () => {
  animation();
- 
+
 }
 
 function fpsCon() {
