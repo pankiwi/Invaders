@@ -38,7 +38,7 @@ Button.prototype = {
 controller = {
 
  buttons: [
-     new Button(100, 410, 60, 60, "lime", "↑", 20),
+     new Button(100, 410, 60, 60, "lime", "↑"),
      new Button(100, 530, 60, 60, "lime", "↓"),
      new Button(30, 470, 60, 60, "lime", "←"),
      new Button(170, 470, 60, 60, "lime", "→")
